@@ -1,0 +1,99 @@
+# ============================================================
+# GeoAttend Pro — Render Blueprint
+# ============================================================
+
+services:
+  - type: web
+    name: geoattend-pro
+    runtime: node
+    plan: free
+    branch: main
+
+    buildCommand: >
+      npm ci &&
+      bash -c "if [ ! -f models/w600k_r50.onnx ]; then
+      curl -L -o /tmp/buffalo_l.zip
+      https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_l.zip
+      &&
+      unzip -o /tmp/buffalo_l.zip w600k_r50.onnx -d models/
+      &&
+      rm /tmp/buffalo_l.zip;
+      fi"
+
+    startCommand: node server.js
+
+    healthCheckPath: /api/health
+
+    envVars:
+      # --------------------------------------------------------
+      # Server
+      # --------------------------------------------------------
+      - key: NODE_ENV
+        value: production
+
+      # Render automatically provides PORT.
+      # server.js should use process.env.PORT.
+
+      # --------------------------------------------------------
+      # Aiven MySQL
+      # --------------------------------------------------------
+      - key: DB_HOST
+        sync: false
+
+      - key: DB_PORT
+        sync: false
+
+      - key: DB_USER
+        sync: false
+
+      - key: DB_PASSWORD
+        sync: false
+
+      - key: DB_NAME
+        sync: false
+
+      # Path to the CA certificate uploaded as a Render Secret File.
+      - key: DB_SSL_CA
+        value: /etc/secrets/aiven-ca.pem
+
+      # --------------------------------------------------------
+      # Authentication
+      # --------------------------------------------------------
+      - key: JWT_SECRET
+        generateValue: true
+
+      - key: JWT_EXPIRES_IN
+        value: 8h
+
+      - key: SESSION_SECRET
+        generateValue: true
+
+      # --------------------------------------------------------
+      # Default Admin
+      # --------------------------------------------------------
+      - key: DEFAULT_ADMIN_EMAIL
+        sync: false
+
+      - key: DEFAULT_ADMIN_PASSWORD
+        sync: false
+
+      # --------------------------------------------------------
+      # Google Maps
+      # --------------------------------------------------------
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false
+
+      # --------------------------------------------------------
+      # Google Sign-In
+      # --------------------------------------------------------
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+
+      - key: GOOGLE_ANDROID_CLIENT_ID
+        sync: false
+
+      # --------------------------------------------------------
+      # Attendance
+      # --------------------------------------------------------
+      - key: ATTENDANCE_MAX_ACCURACY_METERS
+        value: "500"
